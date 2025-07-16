@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YT Downloader | Premium YouTube Clip Downloader</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="theme-toggle" id="theme-toggle">
+        <i class="fas fa-moon"></i>
+    </div>
+<!-- Add below the theme-toggle div -->
+<div class="help-toggle" id="help-toggle">
+    <i class="fas fa-question"></i>
+</div>
+    
+    <div class="particles" id="particles"></div>
+    
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-play-circle"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>YT Downloader</h1>
+                    <div class="powered-by">Powered by FunnyBunny-YT & Dedsec</div>
+                </div>
+            </div>
+            <p>Download stunning YouTube clips in seconds with our premium glassmorphic interface and instant preview</p>
+            
+            <div class="hero-stats">
+                <div class="stat-card">
+                    <i class="fas fa-bolt"></i>
+                    <div class="number">
+                        <span id="avg-processing">0.0</span>s
+                    </div>
+                    <div class="label">Avg. Processing</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-film"></i>
+                    <div class="number">
+                        <span id="clips-created">0</span>+
+                    </div>
+                    <div class="label">Clips Created</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-star"></i>
+                    <div class="number">
+                        <span id="success-rate">0</span>%
+                    </div>
+                    <div class="label">Success Rate</div>
+                </div>
+            </div>
+        </header>
+        
+        <main>
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-film"></i> Create Your Clip</h2>
+                
+                <div id="form-container">
+                    <form id="download-form">
+                        <div class="form-grid">
+                            <div>
+                                <div class="form-group">
+                                    <label for="link">YouTube URL</label>
+                                    <div class="input-with-icon">
+                                        <i class="fab fa-youtube"></i>
+                                        <input type="text" id="link" name="link" class="form-control" 
+                                               placeholder="https://www.youtube.com/watch?v=..." required>
+                                    </div>
+                                    <button type="button" id="preview-btn" class="btn btn-outline" style="width: 100%; margin-top: 10px;">
+                                        <i class="fas fa-eye"></i> Preview Video
+                                    </button>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="output">Output Filename (Optional)</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-file-signature"></i>
+                                        <input type="text" id="output" name="output" class="form-control" 
+                                               placeholder="Filename will be generated automatically">
+                                    </div>
+                                    <div class="note"><i class="fas fa-info-circle"></i> Leave blank to use video title</div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div class="form-group">
+                                    <label>Output Format</label>
+                                    <div class="format-selector" id="format-selector">
+                                        <div class="btn-format active" data-format="mp4">
+                                            <i class="fas fa-file-video"></i> MP4
+                                        </div>
+                                        <div class="btn-format" data-format="mkv">
+                                            <i class="fas fa-film"></i> MKV
+                                        </div>
+                                        <div class="btn-format" data-format="aac">
+                                            <i class="fas fa-play-circle"></i> AAC
+                                        </div>
+                                    </div>
+                                    <input type="hidden" id="format" name="format" value="mp4">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Clip Duration</label>
+                                    <div class="video-preview-container" id="video-preview-container" style="display: none;">
+                                        <video id="preview-player" controls playsinline preload="none" autoplay style="width: 100%; height: auto;"></video>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="ss">Start Time (HH:MM:SS)</label>
+                                        <div class="input-with-icon">
+                                            <i class="fas fa-hourglass-start"></i>
+                                            <input type="text" id="ss" name="ss" class="form-control" value="00:00:00" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="to">End Time (HH:MM:SS) - Max 5 mins duration</label>
+                                        <div class="input-with-icon">
+                                            <i class="fas fa-hourglass-end"></i>
+                                            <input type="text" id="to" name="to" class="form-control" value="00:05:00" required>
+                                        </div>
+                                        <div class="note duration-limit">
+                                            <i class="fas fa-exclamation-circle"></i> Clip duration cannot exceed 5 minutes
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-magic"></i> Create & Download Clip
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="progress-section" id="progress-section" style="display: none;">
+                    <h2 class="card-title"><i class="fas fa-sync-alt fa-spin"></i> Creating Your Clip</h2>
+                    
+                    <div class="progress-container">
+                        <div class="progress-header">
+                            <span>Processing your request...</span>
+                            <span id="progress-percent">0%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="status-message">
+                        <i class="fas fa-cogs"></i>
+                        <span id="status-message">Initializing download process...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="result-section" id="result-section" style="display: none;">
+                <h2 class="card-title"><i class="fas fa-check-circle"></i> Your Clip is Ready!</h2>
+                
+                <div class="video-preview">
+                    <video id="result-player" controls playsinline preload="none" style="display: none; width: 100%; height: 100%;"></video>
+                    <div class="preview-placeholder" id="preview-placeholder">
+                        <i class="fas fa-play-circle"></i>
+                        <p>Click to preview your clip</p>
+                    </div>
+                    <div class="video-loading" id="video-loading">
+                        <i class="fas fa-circle-notch"></i>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button id="download-btn" class="btn btn-success">
+                        <i class="fas fa-download"></i> Download Clip
+                    </button>
+                    <button id="new-download-btn" class="btn btn-outline">
+                        <i class="fas fa-plus-circle"></i> Create Another Clip
+                    </button>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <div class="social-links">
+                <a href="https://github.com/dedshit"><i class="fab fa-github"></i></a>
+                <a href="https://www.instagram.com/_ragava_d_k_/"><i class="fab fa-instagram"></i></a>
+                <a href="https://discord.com/invite/gvmDnCV"><i class="fab fa-discord"></i></a>
+                <a href="https://www.youtube.com/channel/UCSiAsA3JxLZoFx63UTgTS3A"><i class="fab fa-youtube"></i></a>
+            </div>
+            <p>© 2025 YT Downloader | Premium YouTube Clip Downloader</p>
+            <p>Created with <i class="fas fa-heart" style="color: var(--primary);"></i> for content creators</p>
+        </footer>
+    </div>
+    
+    <div class="flashes" id="flash-messages"></div>
+    
+    <!-- Progress Modal -->
+    <div class="progress-modal" id="progress-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-sync-alt fa-spin"></i> Creating Your Clip</h3>
+                <button class="modal-close" id="modal-close">&times;</button>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="modal-progress-fill"></div>
+                </div>
+                <div class="progress-percent" id="modal-progress-percent">0%</div>
+            </div>
+            <div class="status-message" id="modal-status-message">
+                <i class="fas fa-cogs"></i> Initializing download process...
+            </div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<!-- Add before </body> -->
+<div class="help-modal" id="help-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-question-circle"></i> How to Download</h3>
+            <button class="modal-close" id="help-modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <ol class="steps">
+                <li>
+                    <i class="fas fa-copy"></i>
+                    <div>
+                        <strong>Copy YouTube URL</strong>
+                        <p>Copy the YouTube URL from your browser's address bar</p>
+                    </div>
+                </li>
+                <li>
+                    <i class="fas fa-file-video"></i>
+                    <div>
+                        <strong>Select Format</strong>
+                        <p>Choose MP4/MKV for video or AAC for audio format</p>
+                    </div>
+                </li>
+                <li>
+                    <i class="fas fa-eye"></i>
+                    <div>
+                        <strong>Preview Video</strong>
+                        <p>Click "Preview Video" to load and verify your content</p>
+                    </div>
+                </li>
+                <li>
+                    <i class="fas fa-clock"></i>
+                    <div>
+                        <strong>Set Time Range</strong>
+                        <p>Enter start/end times in HH:MM:SS format (optional)</p>
+                    </div>
+                </li>
+                <li>
+                    <i class="fas fa-magic"></i>
+                    <div>
+                        <strong>Create Clip</strong>
+                        <p>Click "Create & Download Clip" to process your video</p>
+                    </div>
+                </li>
+                <li>
+                    <i class="fas fa-download"></i>
+                    <div>
+                        <strong>Download</strong>
+                        <p>Preview and download your clip when processing completes</p>
+                    </div>
+                </li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+<!-- Version notification -->
+<div class="version-notice">
+    Version 1.2 Preview: MP3 & WebM support coming soon!
+</div>
+</body>
+</html>
