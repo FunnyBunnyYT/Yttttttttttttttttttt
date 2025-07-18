@@ -79,15 +79,16 @@ YT_COOKIES = {
 }
 
 YT_HEADERS = {
-    'Connection': 'keep-alive',
-    'User-Agent': 'com.google.ios.youtube/20.10.4 (iPhone16,2; U; CPU iOS 18_3_2 like Mac OS X;)',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'Accept-Language': 'en-us,en;q=0.5',
-    'Sec-Fetch-Mode': 'navigate',
+    'Accept': '*/*',
+    'X-Youtube-Client-Version': '20.28.2',
+    'Authorization': 'Bearer ya29.a0AS3H6NzStqQkWG5BULD3rbeSdnHx1-GOw1IVNxfraK9YjYNKoirHCgy5dWDMuVerGXHA2LWpGK0GkqFsJlszo6Ex9m9rVwAVCBINFP8qv5cFQKXYGqRkFe5fZuN8xQz3iJVrp294zcsb-hdmp_pNr5n5O67dkOMfuVN0a-timfw6eSs5XP-AOjLVa3jHiRrUDlQTXzChyaWQMBQg0s725PJ2DWo8ijHlJ999kF0n-6Qaefnq5x4V9zOmhIkmDmdNl4Emu0P02rrMdnsQy6xG4NEVOupLWVfmXqK0GQLY9DOpTbSRhEkOH9ntR5Men6CSU3a1pomksZJzCAfdaCgYKAYESARASFQHGX2MiI_5JHAJplQSJIQj04HoGTw0343',
     'X-Youtube-Client-Name': '5',
-    'X-Youtube-Client-Version': '20.10.4',
-    'Origin': 'https://www.youtube.com',
-    'X-Goog-Visitor-Id': 'CgtneWx0QzE2MmpKWSjpibnCBjIKCgJJThIEGgAgZw%3D%3D'
+    'Accept-Language': 'en-IN,en;q=0.9',
+    'Cache-Control': 'no-cache',
+    'User-Agent': 'com.google.ios.youtube/20.28.2 (iPad11,1; U; CPU iPadOS 18_5 like Mac OS X; en_IN)',
+    'X-GOOG-API-FORMAT-VERSION': '2',
+    'X-Goog-Visitor-Id': 'CgtBUkpBNThZdkVUOCiszenDBjIKCgJJThIEGgAgPToMCAEg_LOUnsTVmb1oWMKdxsH92fa5ygE%3D',
+    'Connection': 'keep-alive',
 }
 
 YT_PARAMS = {'prettyPrint': 'false'}
@@ -162,15 +163,15 @@ def get_youtube_streams(video_id):
         'context': {
             'client': {
                 'clientName': 'IOS',
-                'clientVersion': '20.10.4',
+                'clientVersion': '20.28.2',
                 'deviceMake': 'Apple',
-                'deviceModel': 'iPhone16,2',
-                'userAgent': 'com.google.ios.youtube/20.10.4 (iPhone16,2; U; CPU iOS 18_3_2 like Mac OS X;)',
+                'deviceModel': 'iPad',
+                'userAgent': 'com.google.ios.youtube/20.28.2 (iPad11,1; U; CPU iPadOS 18_5 like Mac OS X; en_IN)',
                 'osName': 'iPhone',
-                'osVersion': '18.3.2.22D82',
+                'osVersion': '18_5',
                 'hl': 'en',
-                'timeZone': 'UTC',
-                'utcOffsetMinutes': 0,
+                'timeZone': 'Asia/Calcutta',
+                'utcOffsetMinutes': 330,
             },
         },
         'videoId': video_id,
@@ -187,7 +188,7 @@ def get_youtube_streams(video_id):
     response = requests.post(
         'https://www.youtube.com/youtubei/v1/player',
         params=YT_PARAMS,
-        cookies=YT_COOKIES,
+     #   cookies=YT_COOKIES,
         headers=YT_HEADERS,
         json=json_data,
     )
