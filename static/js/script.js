@@ -28,6 +28,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const formContainer = document.getElementById('form-container');
     const youtubeUrlInput = document.getElementById('link');
     const outputField = document.getElementById('output');
+const versionPopup = document.getElementById('version-popup');
+const popupClose = document.querySelector('.popup-close');
     
     // Modal elements
     const progressModal = document.getElementById('progress-modal');
@@ -35,6 +37,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalProgressPercent = document.getElementById('modal-progress-percent');
     const modalStatusMessage = document.getElementById('modal-status-message');
     const modalClose = document.getElementById('modal-close');
+// Show popup on page load
+setTimeout(() => {
+    versionPopup.classList.add('show');
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        versionPopup.style.animation = 'popupFadeOut 0.5s forwards';
+        setTimeout(() => versionPopup.classList.remove('show'), 500);
+    }, 5000);
+}, 1000);
+
+// Close button functionality
+popupClose.addEventListener('click', () => {
+    versionPopup.style.animation = 'popupFadeOut 0.5s forwards';
+    setTimeout(() => versionPopup.classList.remove('show'), 500);
+});
     
     let videoDuration = 0;
     let isOutputEdited = false;
