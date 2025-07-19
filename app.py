@@ -4,6 +4,8 @@ import os
 import logging
 import threading
 import time
+import datetime
+from threading import Lock
 import subprocess
 import json
 import requests
@@ -12,6 +14,59 @@ from mimetypes import guess_type
 import shutil
 from urllib.parse import unquote
 from urllib.parse import urlparse, parse_qs
+
+# Create a lock for thread-safe header updates
+yt_header_lock = Lock()
+
+# Token refresh function (add this new function)
+def refresh_youtube_token():
+    try:
+        headers = {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Connection': 'keep-alive',
+            'X-OAuth-Client-ID': '755541669657-kbosfavg7pk7sr3849c3tf657hpi5jpd.apps.googleusercontent.com',
+            'Accept': '*/*',
+            'User-Agent': 'com.google.ios.youtube/20.28.2 iSL/3.4 iPad/18.5 hw/iPad11_1 (gzip)',
+            'Authorization': 'Bearer 1//0gq-BC5mJ2Kd6CgYIARAAGBASNwF-L9IrlyO1XnUNIvDJmnOYGm4oqpcdfC55X-xA7dSWDwmp-b2ley1sHw9FEz4YtJ_l97xzGgo',
+            'Accept-Language': 'en-IN,en;q=0.9',
+        }
+
+        data = {
+            'app_id': 'com.google.ios.youtube',
+            'client_id': '755541669657-kbosfavg7pk7sr3849c3tf657hpi5jpd.apps.googleusercontent.com',
+            'device_id': '516761AA-4836-4859-9AA9-DD350062C57C',
+            'hl': 'en-IN',
+            'lib_ver': '3.4',
+            'response_type': 'token',
+            'scope': 'https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.force-ssl https://www.googleapis.com/auth/identity.lateimpersonation https://www.googleapis.com/auth/supportcontent https://www.googleapis.com/auth/account_settings_mobile https://www.googleapis.com/auth/accounts.reauth',
+        }
+
+        response = requests.post(
+            'https://oauthaccountmanager.googleapis.com/v1/issuetoken',
+            headers=headers,
+            data=data
+        )
+        
+        if response.status_code == 200:
+            token_data = response.json()
+            new_token = token_data.get('token')
+            if new_token:
+                with yt_header_lock:
+                    # Update the Authorization header
+                    YT_HEADERS['Authorization'] = f'Bearer {new_token}'
+                logging.error(f"Successfully refreshed YouTube token at {datetime.datetime.now()},token: {new_token}")
+                return True
+        logging.error(f"Token refresh failed: {response.status_code} - {response.text}")
+    except Exception as e:
+        logging.error(f"Error refreshing token: {str(e)}")
+    return False
+
+# Token refresh scheduler (add this new function)
+def token_refresh_scheduler():
+    while True:
+        refresh_youtube_token()
+        # Sleep for 50 minutes (3000 seconds)
+        time.sleep(3000)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "supersecretkey")
@@ -78,10 +133,11 @@ YT_COOKIES = {
     "PREF": "f6=40000400&f7=4100&tz=Asia.Calcutta&f5=20000&f4=4000000"
 }
 
+# Modify the YT_HEADERS initialization to use the lock
 YT_HEADERS = {
     'Accept': '*/*',
     'X-Youtube-Client-Version': '20.28.2',
-    'Authorization': 'Bearer ya29.a0AS3H6NzStqQkWG5BULD3rbeSdnHx1-GOw1IVNxfraK9YjYNKoirHCgy5dWDMuVerGXHA2LWpGK0GkqFsJlszo6Ex9m9rVwAVCBINFP8qv5cFQKXYGqRkFe5fZuN8xQz3iJVrp294zcsb-hdmp_pNr5n5O67dkOMfuVN0a-timfw6eSs5XP-AOjLVa3jHiRrUDlQTXzChyaWQMBQg0s725PJ2DWo8ijHlJ999kF0n-6Qaefnq5x4V9zOmhIkmDmdNl4Emu0P02rrMdnsQy6xG4NEVOupLWVfmXqK0GQLY9DOpTbSRhEkOH9ntR5Men6CSU3a1pomksZJzCAfdaCgYKAYESARASFQHGX2MiI_5JHAJplQSJIQj04HoGTw0343',
+    'Authorization': 'Bearer ya29.a0AS3H6Nxad6Nor0fPTsNmKSswCSO_2A_LBwzoqMN5SlNyWtpcsxHXvCOKFa77rK6le-TL0zF0NCz4JEz8r4wXVHvG9NKKm_LBYLHNoyRQk2kIN-KeUSZrfTVDrHa94iE8tU-SXIcS7QQxqQWSgdstGV0RmZI53fK9Tak_2UUkE-dex96qHR8-EsDCKsTJAprtjIKvbXyEZYIqVcAnNExvrNVC7HLYYMPZHuzWnC7BZ9kqBcZQ4nGQyKFp28FF09ghjcgXeI8E7Ej0Zf19E1P98elWaanqhyXkCUSc79d5ElozyM1t1691t2wa30BMeS8955wk3uBipEZH64GiaCgYKAdsSARASFQHGX2MiajvsQeef4JbqG7Bb3g9KIw0343',  # Will be updated by refresh
     'X-Youtube-Client-Name': '5',
     'Accept-Language': 'en-IN,en;q=0.9',
     'Cache-Control': 'no-cache',
@@ -90,6 +146,7 @@ YT_HEADERS = {
     'X-Goog-Visitor-Id': 'CgtBUkpBNThZdkVUOCiszenDBjIKCgJJThIEGgAgPToMCAEg_LOUnsTVmb1oWMKdxsH92fa5ygE%3D',
     'Connection': 'keep-alive',
 }
+
 
 YT_PARAMS = {'prettyPrint': 'false'}
 
@@ -163,15 +220,15 @@ def get_youtube_streams(video_id):
         'context': {
             'client': {
                 'clientName': 'IOS',
-                'clientVersion': '20.28.2',
+                'clientVersion': '20.10.4',
                 'deviceMake': 'Apple',
-                'deviceModel': 'iPad',
-                'userAgent': 'com.google.ios.youtube/20.28.2 (iPad11,1; U; CPU iPadOS 18_5 like Mac OS X; en_IN)',
+                'deviceModel': 'iPhone16,2',
+                'userAgent': 'com.google.ios.youtube/20.10.4 (iPhone16,2; U; CPU iOS 18_3_2 like Mac OS X;)',
                 'osName': 'iPhone',
-                'osVersion': '18_5',
+                'osVersion': '18.3.2.22D82',
                 'hl': 'en',
-                'timeZone': 'Asia/Calcutta',
-                'utcOffsetMinutes': 330,
+                'timeZone': 'UTC',
+                'utcOffsetMinutes': 0,
             },
         },
         'videoId': video_id,
@@ -188,7 +245,7 @@ def get_youtube_streams(video_id):
     response = requests.post(
         'https://www.youtube.com/youtubei/v1/player',
         params=YT_PARAMS,
-     #   cookies=YT_COOKIES,
+        cookies=YT_COOKIES,
         headers=YT_HEADERS,
         json=json_data,
     )
@@ -620,10 +677,18 @@ def cleanup_scheduler():
         cleanup_old_files()
         time.sleep(60)  # Run every minute
 
+# In the main block, start the token refresh thread
 if __name__ == "__main__":
-    # Start cleanup thread
+    # Initial token refresh
+    refresh_youtube_token()
+    
+    # Start token refresh thread
+    token_thread = threading.Thread(target=token_refresh_scheduler, daemon=True)
+    token_thread.start()
+    
+    # Existing cleanup thread
     cleanup_thread = threading.Thread(target=cleanup_scheduler, daemon=True)
     cleanup_thread.start()
     
-    port = int(os.environ.get("PORT", 9999))
+    port = int(os.environ.get("PORT", 45638))
     app.run(debug=True, host='0.0.0.0', port=port)
